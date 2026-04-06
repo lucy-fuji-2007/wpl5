@@ -481,7 +481,7 @@ pre{
           <input type="password" id="pw" name="password" placeholder="••••••••" oninput="chkStr(this.value)"/>
           <div class="sbar"><div class="sfill" id="sf"></div></div>
           <div class="slabel" id="sl"></div>
-          <div class="emsg" id="pwE">8+ chars: uppercase, digit & special char</div>
+          <div class="emsg" id="pwE">8+ chars: uppercase, digit &amp; special char</div>
         </div>
         <div class="field">
           <label>CONFIRM PASSWORD <span class="req">*</span></label>
@@ -648,10 +648,10 @@ function setMethod(m,btn){
 }
 
 // ── Helpers ──
-function se(id,show){const e=document.getElementById(id);if(e)e.classList.toggle('show',show)}
-function mf(el,isErr){el.classList.toggle('err',isErr);el.classList.toggle('ok',!isErr&&el.value.trim()!=='')}
+function se(id,show){const e=document.getElementById(id);if(e)e.classList.toggle('show',show);}
+function mf(el,isErr){el.classList.toggle('err',isErr);el.classList.toggle('ok',!isErr&&el.value.trim()!=='');}
 
-// ── Live ──
+// ── Live validation ──
 document.getElementById('em').addEventListener('input',function(){
   const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
   mf(this,this.value&&!ok);se('emE',this.value&&!ok);
@@ -669,62 +669,77 @@ document.getElementById('cp').addEventListener('input',function(){
   mf(this,this.value&&!ok);se('cpE',this.value&&!ok);
 });
 
+// ── Password strength ──
 function chkStr(pw){
   const f=document.getElementById('sf'),l=document.getElementById('sl');
   let s=0;
-  if(pw.length>=8)s++;if(/[A-Z]/.test(pw))s++;if(/\d/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+  if(pw.length>=8)s++;
+  if(/[A-Z]/.test(pw))s++;
+  if(/\d/.test(pw))s++;
+  if(/[^A-Za-z0-9]/.test(pw))s++;
   const lvl=['','WEAK','FAIR','STRONG','MAX'];
   const col=['','#ff2d78','#f5c842','#39ff14','#00f5ff'];
   const pct=['0%','25%','50%','75%','100%'];
-  f.style.width=pct[s];f.style.background=col[s];
-  l.textContent=pw?lvl[s]:'';l.style.color=col[s];
+  f.style.width=pct[s];
+  f.style.background=col[s];
+  l.textContent=pw?lvl[s]:'';
+  l.style.color=col[s];
 }
 
 // ── Submit ──
 document.getElementById('regForm').addEventListener('submit',function(e){
   e.preventDefault();
-  let valid=true;const errs=[];
+  let valid=true;
+  const errs=[];
 
   const chks=[
-    {id:'fn',errId:'fnE',lbl:'First Name',chk:v=>v.trim()!=='',msg:'First name is required'},
-    {id:'ln',errId:'lnE',lbl:'Last Name', chk:v=>v.trim()!=='',msg:'Last name is required'},
-    {id:'em',errId:'emE',lbl:'Email',     chk:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),msg:'Invalid email format'},
-    {id:'db',errId:'dbE',lbl:'DOB',       chk:v=>v!=='',msg:'Date of birth required'},
-    {id:'un',errId:'unE',lbl:'Username',  chk:v=>/^[a-zA-Z0-9_]{4,20}$/.test(v),msg:'4-20 chars, alphanumeric+underscore'},
-    {id:'pw',errId:'pwE',lbl:'Password',  chk:v=>/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(v),msg:'Weak password — requirements not met'},
-    {id:'cp',errId:'cpE',lbl:'Confirm PW',chk:v=>v===document.getElementById('pw').value,msg:'Password mismatch'},
+    {id:'fn',errId:'fnE',lbl:'First Name', chk:v=>v.trim()!=='',         msg:'First name is required'},
+    {id:'ln',errId:'lnE',lbl:'Last Name',  chk:v=>v.trim()!=='',         msg:'Last name is required'},
+    {id:'em',errId:'emE',lbl:'Email',      chk:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v), msg:'Invalid email format'},
+    {id:'db',errId:'dbE',lbl:'DOB',        chk:v=>v!=='',                msg:'Date of birth required'},
+    {id:'un',errId:'unE',lbl:'Username',   chk:v=>/^[a-zA-Z0-9_]{4,20}$/.test(v),       msg:'4-20 chars, alphanumeric+underscore'},
+    {id:'pw',errId:'pwE',lbl:'Password',   chk:v=>/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(v), msg:'Weak password — requirements not met'},
+    {id:'cp',errId:'cpE',lbl:'Confirm PW', chk:v=>v===document.getElementById('pw').value, msg:'Password mismatch'},
   ];
+
   chks.forEach(({id,errId,lbl,chk,msg})=>{
     const el=document.getElementById(id);
-    const ok=chk(el.value);mf(el,!ok);se(errId,!ok);
+    const ok=chk(el.value);
+    mf(el,!ok);
+    se(errId,!ok);
     if(!ok){valid=false;errs.push({lbl,msg});}
   });
 
   const g=document.querySelector('input[name="gender"]:checked');
-  se('gE',!g);if(!g){valid=false;errs.push({lbl:'Gender',msg:'Classification required'});}
+  se('gE',!g);
+  if(!g){valid=false;errs.push({lbl:'Gender',msg:'Classification required'});}
 
   const p=document.getElementById('ph');
   if(p.value&&!/^\d{10}$/.test(p.value.replace(/\D/g,''))){
     mf(p,true);se('phE',true);valid=false;errs.push({lbl:'Phone',msg:'Must be 10 digits'});
   }
+
   const tc=document.getElementById('tc');
-  se('tcE',!tc.checked);if(!tc.checked){valid=false;errs.push({lbl:'EULA',msg:'Acceptance mandatory'});}
+  se('tcE',!tc.checked);
+  if(!tc.checked){valid=false;errs.push({lbl:'EULA',msg:'Acceptance mandatory'});}
 
   const fd={
-    'FULL_NAME':   (document.getElementById('fn').value+' '+document.getElementById('ln').value).trim(),
-    'EMAIL':       document.getElementById('em').value,
-    'PHONE':       p.value||'N/A',
-    'DOB':         document.getElementById('db').value?fmtDate(document.getElementById('db').value):'N/A',
-    'GENDER':      g?g.value:'N/A',
-    'HANDLE':      document.getElementById('un').value,
-    'CORP':        document.getElementById('cs').value||'UNAFFILIATED',
-    'LOCATION':    document.getElementById('ad').value||'N/A',
-    'EULA':        tc.checked?'[ ACCEPTED ]':'[ REJECTED ]',
-    'METHOD':      'HTTP '+method.toUpperCase()+' via $_'+method.toUpperCase(),
+    'FULL_NAME': (document.getElementById('fn').value+' '+document.getElementById('ln').value).trim(),
+    'EMAIL':     document.getElementById('em').value,
+    'PHONE':     p.value||'N/A',
+    'DOB':       document.getElementById('db').value ? fmtDate(document.getElementById('db').value) : 'N/A',
+    'GENDER':    g ? g.value : 'N/A',
+    'HANDLE':    document.getElementById('un').value,
+    'CORP':      document.getElementById('cs').value||'UNAFFILIATED',
+    'LOCATION':  document.getElementById('ad').value||'N/A',
+    'EULA':      tc.checked ? '[ ACCEPTED ]' : '[ REJECTED ]',
+    'METHOD':    'HTTP '+method.toUpperCase()+' via $_'+method.toUpperCase(),
   };
+
   renderResult(valid,errs,fd);
 });
 
+// ── Date formatter ──
 function fmtDate(d){
   const dt=new Date(d+'T00:00:00');
   const m=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
@@ -734,6 +749,7 @@ function fmtDate(d){
   return `${dt.getDate().toString().padStart(2,'0')}-${m[dt.getMonth()]}-${dt.getFullYear()} // AGE: ${age}`;
 }
 
+// ── Render result — BUG FIXED HERE ──
 function renderResult(ok,errs,data){
   const labels={post:'POST // $_POST',get:'GET // $_GET',request:'REQUEST // $_REQUEST'};
   document.getElementById('mbadge').textContent='▸ '+labels[method];
@@ -742,9 +758,10 @@ function renderResult(ok,errs,data){
   sb.className='statusbar '+(ok?'ok':'fail');
   document.getElementById('sIcon').textContent=ok?'OK':'ERR';
   document.getElementById('sTitle').textContent=ok?'IDENTITY NODE CREATED':'VALIDATION_FAILURE';
+
+  // ✅ FIXED: was a broken nested ternary — now a clean single ternary
   document.getElementById('sSub').textContent=ok
     ?'> Data packet received and processed without errors.'
-    ?'> '+errs.length+' critical error(s) detected. Resubmit required.'
     :'> '+errs.length+' critical error(s) detected. Resubmit required.';
 
   const ec=document.getElementById('errcard');
@@ -752,7 +769,9 @@ function renderResult(ok,errs,data){
     ec.style.display='block';
     document.getElementById('errlist').innerHTML=errs.map(e=>
       `<li><span class="fnm">${e.lbl}:</span> ${e.msg}</li>`).join('');
-  } else ec.style.display='none';
+  } else {
+    ec.style.display='none';
+  }
 
   document.getElementById('dtbl').innerHTML=Object.entries(data).map(([k,v])=>
     `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
@@ -763,12 +782,14 @@ function renderResult(ok,errs,data){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── Navigation ──
 function goBack(){
   document.getElementById('page-result').classList.remove('active');
   document.getElementById('page-form').classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
+// ── Reset ──
 function resetForm(){
   document.getElementById('regForm').reset();
   document.querySelectorAll('.emsg').forEach(e=>e.classList.remove('show'));
@@ -777,6 +798,7 @@ function resetForm(){
   document.getElementById('sl').textContent='';
 }
 
+// ── Code tabs ──
 function showCode(id,btn){
   document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.cblock').forEach(b=>b.classList.remove('active'));
