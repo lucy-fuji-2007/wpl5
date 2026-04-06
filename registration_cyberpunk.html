@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>REGISTER // NETRUNNER ACCESS</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#030712;
+  --bg2:#070d1a;
+  --panel:#0a0f1e;
+  --panel2:#0d1426;
+  --cyan:#00f5ff;
+  --cyan2:#00bcd4;
+  --yellow:#f5e642;
+  --pink:#ff2d78;
+  --green:#39ff14;
+  --border:#1a2540;
+  --border-cyan:rgba(0,245,255,0.35);
+  --border-yellow:rgba(245,230,66,0.4);
+  --text:#c8d8f0;
+  --muted:#4a6080;
+  --error:#ff2d78;
+  --success:#39ff14;
+  --radius:3px;
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:'Rajdhani',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:32px 20px 60px;
+  position:relative;
+  overflow-x:hidden;
+}
+
+/* ── Scanline overlay ── */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.06) 0px,rgba(0,0,0,0.06) 1px,transparent 1px,transparent 3px);
+  pointer-events:none;z-index:999;
+}
+
+/* ── Grid bg ── */
+body::after{
+  content:'';
+  position:fixed;inset:0;
+  background-image:
+    linear-gradient(rgba(0,245,255,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,245,255,0.04) 1px,transparent 1px);
+  background-size:48px 48px;
+  pointer-events:none;z-index:0;
+  animation:gridShift 20s linear infinite;
+}
+@keyframes gridShift{from{background-position:0 0}to{background-position:48px 48px}}
+
+/* ── Page toggle ── */
+#page-form,#page-result{display:none}
+#page-form.active,#page-result.active{display:block}
+
+.wrap{max-width:680px;margin:0 auto;position:relative;z-index:1}
+
+/* ── Top bar ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  border:1px solid var(--border-cyan);
+  background:var(--panel);
+  padding:10px 20px;
+  margin-bottom:4px;
+  clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%);
+  animation:fadeIn .4s ease both;
+}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:blink 1.4s ease-in-out infinite}
+.topbar-dot.y{background:var(--yellow);box-shadow:0 0 8px var(--yellow);animation-delay:.3s}
+.topbar-dot.p{background:var(--pink);box-shadow:0 0 8px var(--pink);animation-delay:.6s}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.topbar-label{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan);letter-spacing:2px}
+.topbar-right{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px}
+#clock{color:var(--cyan)}
+
+/* ── Header ── */
+.header{
+  border:1px solid var(--border-cyan);
+  border-top:none;
+  background:var(--panel2);
+  padding:28px 32px;
+  margin-bottom:4px;
+  position:relative;
+  overflow:hidden;
+  animation:fadeIn .5s ease .1s both;
+}
+.header::before{
+  content:'';position:absolute;
+  top:-1px;left:0;width:60%;height:2px;
+  background:linear-gradient(90deg,var(--cyan),transparent);
+}
+.header::after{
+  content:'ACCESS_PROTOCOL_v4.2';
+  position:absolute;top:12px;right:20px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:9px;color:rgba(0,245,255,0.2);
+  letter-spacing:2px;
+}
+.eyebrow{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:var(--yellow);
+  letter-spacing:3px;margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;
+}
+.eyebrow::before{content:'[';color:var(--muted)}
+.eyebrow::after{content:']';color:var(--muted)}
+.header h1{
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(22px,5vw,34px);
+  font-weight:900;
+  color:var(--cyan);
+  letter-spacing:2px;
+  text-shadow:0 0 20px rgba(0,245,255,0.4);
+  line-height:1.1;
+}
+.header h1 span{color:var(--yellow)}
+.header-sub{
+  margin-top:10px;
+  font-size:14px;font-weight:300;
+  color:var(--muted);
+  font-family:'Share Tech Mono',monospace;
+  letter-spacing:1px;
+}
+
+/* ── Method tabs ── */
+.method-row{
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:3px;margin-bottom:4px;
+  animation:fadeIn .5s ease .2s both;
+}
+.mtab{
+  padding:10px;border:1px solid var(--border);
+  background:var(--panel);
+  font-family:'Orbitron',sans-serif;
+  font-size:11px;font-weight:700;
+  letter-spacing:2px;color:var(--muted);
+  cursor:pointer;text-align:center;
+  transition:all .2s;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);
+}
+.mtab:hover{color:var(--cyan);border-color:var(--border-cyan)}
+.mtab.active{
+  background:rgba(0,245,255,0.08);
+  border-color:var(--cyan);
+  color:var(--cyan);
+  text-shadow:0 0 8px var(--cyan);
+}
+
+/* ── Main panel ── */
+.panel{
+  border:1px solid var(--border-cyan);
+  background:var(--panel);
+  padding:28px 32px;
+  position:relative;
+  animation:fadeIn .6s ease .25s both;
+}
+.panel::after{
+  content:'';position:absolute;
+  bottom:-1px;right:0;width:40%;height:1px;
+  background:linear-gradient(270deg,var(--yellow),transparent);
+}
+
+/* ── Section heading ── */
+.sec{
+  font-family:'Orbitron',sans-serif;
+  font-size:10px;font-weight:700;
+  letter-spacing:3px;color:var(--yellow);
+  margin-bottom:16px;margin-top:24px;
+  display:flex;align-items:center;gap:10px;
+}
+.sec:first-child{margin-top:0}
+.sec::before{content:'//';color:var(--muted);font-family:'Share Tech Mono',monospace}
+.sec::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border-yellow),transparent)}
+
+/* ── Grid ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.full{grid-column:1/-1}
+
+/* ── Fields ── */
+.field{display:flex;flex-direction:column;gap:6px}
+label{
+  font-family:'Share Tech Mono',monospace;
+  font-size:10px;color:var(--muted);
+  letter-spacing:2px;text-transform:uppercase;
+  display:flex;align-items:center;gap:6px;
+}
+label .req{color:var(--pink);font-size:12px}
+
+input,select,textarea{
+  background:var(--bg2);
+  border:1px solid var(--border);
+  border-left:2px solid var(--cyan2);
+  padding:11px 14px;
+  color:var(--text);
+  font-family:'Rajdhani',sans-serif;
+  font-size:15px;font-weight:500;
+  outline:none;width:100%;
+  transition:all .2s;
+  border-radius:0;
+  clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%);
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--cyan);
+  border-left-color:var(--cyan);
+  background:rgba(0,245,255,0.04);
+  color:#fff;
+  box-shadow:inset 0 0 12px rgba(0,245,255,0.06);
+}
+input.err{border-color:var(--pink);border-left-color:var(--pink)}
+input.ok{border-left-color:var(--green)}
+select option{background:var(--panel)}
+textarea{resize:vertical;min-height:80px}
+input[type=date]::-webkit-calendar-picker-indicator{filter:invert(1) sepia(1) saturate(3) hue-rotate(155deg)}
+
+.emsg{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--pink);letter-spacing:1px;display:none}
+.emsg.show{display:block}
+.emsg::before{content:'ERR > '}
+
+/* ── Password strength ── */
+.sbar{height:3px;background:var(--border);margin-top:6px}
+.sfill{height:100%;transition:width .3s,background .3s;width:0%}
+.slabel{font-family:'Share Tech Mono',monospace;font-size:9px;margin-top:4px;letter-spacing:2px}
+
+/* ── Radio ── */
+.rgroup{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.ritem{
+  display:flex;align-items:center;gap:8px;
+  border:1px solid var(--border);
+  background:var(--bg2);
+  padding:9px 14px;cursor:pointer;
+  font-size:14px;font-weight:600;
+  transition:all .2s;
+  clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,0 100%);
+}
+.ritem:has(input:checked){
+  border-color:var(--yellow);
+  background:rgba(245,230,66,0.07);
+  color:var(--yellow);
+}
+.ritem input{accent-color:var(--yellow);width:14px;height:14px;flex-shrink:0}
+
+/* ── Checkbox ── */
+.citem{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--muted);cursor:pointer;margin-top:8px}
+.citem input{accent-color:var(--cyan);width:15px;height:15px;margin-top:2px;flex-shrink:0}
+.citem a{color:var(--cyan)}
+
+/* ── Buttons ── */
+.brow{display:flex;gap:10px;margin-top:22px}
+.btn{
+  flex:1;padding:13px 10px;
+  border:none;cursor:pointer;
+  font-family:'Orbitron',sans-serif;
+  font-size:12px;font-weight:700;
+  letter-spacing:2px;
+  transition:all .2s;
+  text-align:center;text-decoration:none;display:block;
+}
+.btn-p{
+  background:var(--cyan);color:#020812;
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.btn-p:hover{background:var(--yellow);box-shadow:0 0 20px rgba(245,230,66,0.5)}
+.btn-s{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--muted);
+  clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px));
+}
+.btn-s:hover{border-color:var(--pink);color:var(--pink)}
+
+/* ── Divider ── */
+.div{display:flex;align-items:center;gap:12px;margin:22px 0 18px}
+.div::before,.div::after{content:'';flex:1;height:1px;background:var(--border)}
+.div span{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:3px;white-space:nowrap}
+
+/* ════════════════════════════════
+   RESULT PAGE
+════════════════════════════════ */
+.mbadge{
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid var(--border-cyan);
+  background:rgba(0,245,255,0.06);
+  color:var(--cyan);padding:7px 16px;
+  font-family:'Share Tech Mono',monospace;
+  font-size:11px;letter-spacing:2px;
+  margin-bottom:16px;
+  clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,0 100%);
+}
+.mbadge::before{content:'▸';color:var(--green)}
+
+.statusbar{
+  padding:22px 28px;margin-bottom:4px;
+  display:flex;align-items:center;gap:16px;
+  animation:fadeIn .4s ease both;
+}
+.statusbar.ok{border:1px solid rgba(57,255,20,0.35);background:rgba(57,255,20,0.05)}
+.statusbar.fail{border:1px solid rgba(255,45,120,0.35);background:rgba(255,45,120,0.05)}
+.status-icon{
+  font-family:'Orbitron',sans-serif;font-size:28px;font-weight:900;flex-shrink:0;
+}
+.statusbar.ok .status-icon{color:var(--green);text-shadow:0 0 12px var(--green)}
+.statusbar.fail .status-icon{color:var(--pink);text-shadow:0 0 12px var(--pink)}
+.status-title{font-family:'Orbitron',sans-serif;font-size:18px;font-weight:700;letter-spacing:1px}
+.statusbar.ok .status-title{color:var(--green)}
+.statusbar.fail .status-title{color:var(--pink)}
+.status-sub{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--muted);margin-top:5px;letter-spacing:1px}
+
+.errcard{
+  border:1px solid rgba(255,45,120,0.3);background:rgba(255,45,120,0.05);
+  padding:18px 24px;margin-bottom:4px;
+  animation:fadeIn .5s ease .1s both;
+}
+.errcard h3{
+  font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;
+  color:var(--pink);letter-spacing:3px;margin-bottom:12px;
+}
+.errcard ul{list-style:none;display:flex;flex-direction:column;gap:7px}
+.errcard li{font-family:'Share Tech Mono',monospace;font-size:11px;color:#ff7aa0;padding-left:16px;position:relative;letter-spacing:1px}
+.errcard li::before{content:'!';position:absolute;left:0;color:var(--pink)}
+.fnm{color:var(--pink);font-weight:700}
+
+.dtable{
+  border:1px solid var(--border-cyan);
+  background:var(--panel);
+  animation:fadeIn .6s ease .15s both;
+}
+.dthead{
+  padding:16px 24px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--panel2);
+}
+.dthead h3{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:2px}
+.dthead span{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted)}
+table{width:100%;border-collapse:collapse}
+tr{border-bottom:1px solid var(--border);transition:background .15s}
+tr:last-child{border-bottom:none}
+tr:hover{background:rgba(0,245,255,0.03)}
+td{padding:13px 24px;font-size:14px;vertical-align:top;font-family:'Rajdhani',sans-serif;font-weight:500}
+td:first-child{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1.5px;width:36%;white-space:nowrap}
+td:last-child{color:var(--text)}
+
+/* code compare */
+.ccompare{margin-top:20px;animation:fadeIn .7s ease .2s both}
+.ccompare h3{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;color:var(--yellow);letter-spacing:3px;margin-bottom:14px}
+.ctabs{display:flex;gap:4px;margin-bottom:0;flex-wrap:wrap}
+.ctab{
+  padding:8px 16px;border:1px solid var(--border);
+  background:transparent;cursor:pointer;
+  font-family:'Share Tech Mono',monospace;font-size:10px;
+  color:var(--muted);letter-spacing:1px;transition:all .2s;
+}
+.ctab.active{border-color:var(--yellow);color:var(--yellow);background:rgba(245,230,66,0.07)}
+.cblock{display:none}
+.cblock.active{display:block}
+pre{
+  background:var(--bg);
+  border:1px solid var(--border);
+  border-top:none;
+  padding:20px;overflow-x:auto;
+  font-size:12px;line-height:1.7;
+  font-family:'Share Tech Mono',monospace;
+  color:#8899bb;
+}
+.kw{color:#ff79c6}.fn{color:var(--green)}.str{color:var(--yellow)}
+.cmt{color:var(--muted);font-style:italic}.var{color:var(--cyan)}.op{color:var(--pink)}
+
+.acts{display:flex;gap:10px;margin-top:16px;animation:fadeIn .8s ease .25s both}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── Glitch text animation ── */
+@keyframes glitch{
+  0%,100%{text-shadow:0 0 20px rgba(0,245,255,0.4)}
+  92%{text-shadow:0 0 20px rgba(0,245,255,0.4)}
+  93%{text-shadow:-3px 0 rgba(255,45,120,0.7),3px 0 rgba(0,245,255,0.7)}
+  94%{text-shadow:3px 0 rgba(255,45,120,0.7),-3px 0 rgba(0,245,255,0.7)}
+  96%{text-shadow:0 0 20px rgba(0,245,255,0.4)}
+}
+.header h1{animation:glitch 6s ease-in-out infinite}
+
+@media(max-width:560px){
+  .panel,.header{padding:20px 16px}
+  .g2{grid-template-columns:1fr}
+  .full{grid-column:auto}
+  .brow,.acts{flex-direction:column}
+  td{padding:10px 14px}
+  td:first-child{width:42%}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ PAGE 1 — FORM ═══════════ -->
+<div id="page-form" class="active">
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <div class="topbar-dot y"></div>
+      <div class="topbar-dot p"></div>
+      <div class="topbar-label">SYS://NETRUNNER.AUTH</div>
+    </div>
+    <div class="topbar-right">LOCAL_TIME: <span id="clock">--:--:--</span></div>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">USER REGISTRATION PROTOCOL</div>
+    <h1>JACK<span>_</span>IN</h1>
+    <div class="header-sub">> Initialize new identity node. All fields marked * are mandatory.</div>
+  </div>
+
+  <div class="method-row">
+    <button class="mtab active" onclick="setMethod('post',this)">$_POST</button>
+    <button class="mtab" onclick="setMethod('get',this)">$_GET</button>
+    <button class="mtab" onclick="setMethod('request',this)">$_REQUEST</button>
+  </div>
+
+  <div class="panel">
+    <form id="regForm" novalidate>
+
+      <div class="sec">PERSONAL IDENTITY</div>
+      <div class="g2">
+        <div class="field">
+          <label>FIRST NAME <span class="req">*</span></label>
+          <input type="text" id="fn" name="first_name" placeholder="John"/>
+          <div class="emsg" id="fnE">First name is required</div>
+        </div>
+        <div class="field">
+          <label>LAST NAME <span class="req">*</span></label>
+          <input type="text" id="ln" name="last_name" placeholder="Doe"/>
+          <div class="emsg" id="lnE">Last name is required</div>
+        </div>
+        <div class="field full">
+          <label>EMAIL ADDRESS <span class="req">*</span></label>
+          <input type="email" id="em" name="email" placeholder="runner@ncorp.net"/>
+          <div class="emsg" id="emE">Invalid email format detected</div>
+        </div>
+        <div class="field">
+          <label>PHONE NODE</label>
+          <input type="tel" id="ph" name="phone" placeholder="9876543210"/>
+          <div class="emsg" id="phE">Must be exactly 10 digits</div>
+        </div>
+        <div class="field">
+          <label>DATE OF BIRTH <span class="req">*</span></label>
+          <input type="date" id="db" name="dob"/>
+          <div class="emsg" id="dbE">DOB required for ID verification</div>
+        </div>
+        <div class="field full">
+          <label>GENDER <span class="req">*</span></label>
+          <div class="rgroup">
+            <label class="ritem"><input type="radio" name="gender" value="Male"/> MALE</label>
+            <label class="ritem"><input type="radio" name="gender" value="Female"/> FEMALE</label>
+            <label class="ritem"><input type="radio" name="gender" value="Other"/> OTHER</label>
+            <label class="ritem"><input type="radio" name="gender" value="N/A"/> N/A</label>
+          </div>
+          <div class="emsg" id="gE">Gender classification required</div>
+        </div>
+      </div>
+
+      <div class="div"><span>// SECURITY CREDENTIALS</span></div>
+      <div class="sec">ACCESS CREDENTIALS</div>
+      <div class="g2">
+        <div class="field full">
+          <label>USERNAME / HANDLE <span class="req">*</span></label>
+          <input type="text" id="un" name="username" placeholder="ghost_runner_v2"/>
+          <div class="emsg" id="unE">4-20 chars, alphanumeric + underscore only</div>
+        </div>
+        <div class="field">
+          <label>PASSWORD <span class="req">*</span></label>
+          <input type="password" id="pw" name="password" placeholder="••••••••" oninput="chkStr(this.value)"/>
+          <div class="sbar"><div class="sfill" id="sf"></div></div>
+          <div class="slabel" id="sl"></div>
+          <div class="emsg" id="pwE">8+ chars: uppercase, digit & special char</div>
+        </div>
+        <div class="field">
+          <label>CONFIRM PASSWORD <span class="req">*</span></label>
+          <input type="password" id="cp" name="confirm_password" placeholder="••••••••"/>
+          <div class="emsg" id="cpE">Password mismatch detected</div>
+        </div>
+        <div class="field full">
+          <label>CORP / DIVISION</label>
+          <select id="cs" name="course">
+            <option value="">— SELECT AFFILIATION —</option>
+            <option>B.Sc. Computer Science</option>
+            <option>B.E. / B.Tech – IT</option>
+            <option>B.E. / B.Tech – CS</option>
+            <option>M.Sc. Computer Science</option>
+            <option>MCA</option>
+            <option>MBA</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field full">
+          <label>PHYSICAL LOCATION</label>
+          <textarea id="ad" name="address" placeholder="Sector 7, Neo Mumbai, Maharashtra — 400001"></textarea>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:16px">
+        <label class="citem">
+          <input type="checkbox" id="tc" name="terms"/>
+          I accept the <a href="#">End-User License Agreement</a> &amp; <a href="#">Data Harvesting Policy</a> <span class="req">*</span>
+        </label>
+        <div class="emsg" id="tcE">EULA acceptance is mandatory</div>
+      </div>
+
+      <div class="brow">
+        <button type="button" class="btn btn-s" onclick="resetForm()">PURGE DATA</button>
+        <button type="submit" class="btn btn-p">UPLOAD IDENTITY ▸▸</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+</div>
+
+<!-- ═══════════ PAGE 2 — RESULT ═══════════ -->
+<div id="page-result">
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-dot"></div>
+      <div class="topbar-dot y"></div>
+      <div class="topbar-dot p"></div>
+      <div class="topbar-label">SYS://NETRUNNER.AUTH — RESPONSE</div>
+    </div>
+    <div class="topbar-right">LOCAL_TIME: <span id="clock2">--:--:--</span></div>
+  </div>
+
+  <div id="statusbar" class="statusbar ok">
+    <div class="status-icon" id="sIcon">OK</div>
+    <div>
+      <div class="status-title" id="sTitle">IDENTITY NODE CREATED</div>
+      <div class="status-sub" id="sSub">> Data packet received and processed without errors.</div>
+    </div>
+  </div>
+
+  <div id="errcard" class="errcard" style="display:none">
+    <h3>// VALIDATION_ERRORS DETECTED</h3>
+    <ul id="errlist"></ul>
+  </div>
+
+  <div class="dtable">
+    <div class="dthead">
+      <h3>// IDENTITY_RECORD</h3>
+      <span id="ts"></span>
+    </div>
+    <table id="dtbl"></table>
+  </div>
+
+  <div class="ccompare">
+    <h3>// PHP_SUPERGLOBAL REFERENCE</h3>
+    <div class="ctabs">
+      <button class="ctab active" onclick="showCode('post',this)">post_registration.php</button>
+      <button class="ctab" onclick="showCode('get',this)">get_registration.php</button>
+      <button class="ctab" onclick="showCode('req',this)">request_registration.php</button>
+    </div>
+    <div id="code-post" class="cblock active">
+<pre><span class="cmt">// $_POST — data travels in HTTP body, NOT in URL</span>
+<span class="cmt">// Use for sensitive data (passwords, personal info)</span>
+
+<span class="kw">function</span> <span class="fn">clean</span>(<span class="var">$v</span>) {
+    <span class="kw">return</span> <span class="fn">htmlspecialchars</span>(<span class="fn">trim</span>(<span class="var">$v</span> <span class="op">??</span> <span class="str">''</span>), ENT_QUOTES, <span class="str">'UTF-8'</span>);
+}
+
+<span class="var">$firstName</span> <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_POST</span>[<span class="str">'first_name'</span>] <span class="op">??</span> <span class="str">''</span>);
+<span class="var">$email</span>     <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_POST</span>[<span class="str">'email'</span>]      <span class="op">??</span> <span class="str">''</span>);
+<span class="var">$password</span>  <span class="op">=</span>       <span class="var">$_POST</span>[<span class="str">'password'</span>]   <span class="op">??</span> <span class="str">''</span>;
+
+<span class="kw">if</span> (!<span class="fn">filter_var</span>(<span class="var">$email</span>, FILTER_VALIDATE_EMAIL))
+    <span class="var">$errors</span>[<span class="str">'email'</span>] <span class="op">=</span> <span class="str">'Invalid e-mail format.'</span>;
+
+<span class="kw">if</span> (!<span class="fn">preg_match</span>(<span class="str">'/^(?=.*[A-Z])(?=.*\d)(?=.*\W).{8,}$/'</span>, <span class="var">$password</span>))
+    <span class="var">$errors</span>[<span class="str">'password'</span>] <span class="op">=</span> <span class="str">'Weak password detected.'</span>;
+
+<span class="cmt">// Data NOT visible in URL — safe for forms &amp; logins</span></pre>
+    </div>
+    <div id="code-get" class="cblock">
+<pre><span class="cmt">// $_GET — data appended to URL as query string</span>
+<span class="cmt">// ?first_name=John&email=john%40example.com&...</span>
+
+<span class="var">$firstName</span> <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_GET</span>[<span class="str">'first_name'</span>] <span class="op">??</span> <span class="str">''</span>);
+<span class="var">$email</span>     <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_GET</span>[<span class="str">'email'</span>]      <span class="op">??</span> <span class="str">''</span>);
+
+<span class="kw">if</span> (!<span class="fn">filter_var</span>(<span class="var">$email</span>, FILTER_VALIDATE_EMAIL))
+    <span class="var">$errors</span>[<span class="str">'email'</span>] <span class="op">=</span> <span class="str">'Invalid e-mail format.'</span>;
+
+<span class="var">$qs</span> <span class="op">=</span> <span class="var">$_SERVER</span>[<span class="str">'QUERY_STRING'</span>]; <span class="cmt">// full raw query</span>
+
+<span class="cmt">// ⚠  Visible in browser history, server logs, referrer headers</span>
+<span class="cmt">// ⚠  Never use for passwords or sensitive fields</span>
+<span class="cmt">// ✓  Good for bookmarkable search/filter pages</span></pre>
+    </div>
+    <div id="code-req" class="cblock">
+<pre><span class="cmt">// $_REQUEST — merges $_GET + $_POST + $_COOKIE</span>
+<span class="cmt">// Works regardless of the form's method attribute</span>
+
+<span class="var">$method</span>    <span class="op">=</span> <span class="fn">strtoupper</span>(<span class="var">$_SERVER</span>[<span class="str">'REQUEST_METHOD'</span>]);
+<span class="var">$firstName</span> <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_REQUEST</span>[<span class="str">'first_name'</span>] <span class="op">??</span> <span class="str">''</span>);
+<span class="var">$email</span>     <span class="op">=</span> <span class="fn">clean</span>(<span class="var">$_REQUEST</span>[<span class="str">'email'</span>]      <span class="op">??</span> <span class="str">''</span>);
+
+<span class="kw">if</span> (!<span class="fn">filter_var</span>(<span class="var">$email</span>, FILTER_VALIDATE_EMAIL))
+    <span class="var">$errors</span>[<span class="str">'email'</span>] <span class="op">=</span> <span class="str">'Invalid e-mail format.'</span>;
+
+<span class="cmt">// Merge priority: php.ini variables_order (EGPCS)</span>
+<span class="cmt">// $_REQUEST = $_GET ∪ $_POST ∪ $_COOKIE</span>
+<span class="cmt">// Prefer explicit $_POST/$_GET when method is known</span></pre>
+    </div>
+  </div>
+
+  <div id="mbadge" class="mbadge">POST // $_POST</div>
+
+  <div class="acts">
+    <button class="btn btn-s" onclick="goBack()">◂◂ RECONNECT</button>
+    <button class="btn btn-p" onclick="goBack()">NEW IDENTITY ▸▸</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── Clock ──
+function tick(){
+  const t=new Date().toLocaleTimeString('en-GB');
+  document.getElementById('clock').textContent=t;
+  const c2=document.getElementById('clock2');
+  if(c2)c2.textContent=t;
+}
+tick();setInterval(tick,1000);
+
+// ── Method ──
+let method='post';
+function setMethod(m,btn){
+  method=m;
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// ── Helpers ──
+function se(id,show){const e=document.getElementById(id);if(e)e.classList.toggle('show',show)}
+function mf(el,isErr){el.classList.toggle('err',isErr);el.classList.toggle('ok',!isErr&&el.value.trim()!=='')}
+
+// ── Live ──
+document.getElementById('em').addEventListener('input',function(){
+  const ok=/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value);
+  mf(this,this.value&&!ok);se('emE',this.value&&!ok);
+});
+document.getElementById('ph').addEventListener('input',function(){
+  const ok=/^\d{10}$/.test(this.value.replace(/\D/g,''))||this.value==='';
+  mf(this,this.value&&!ok);se('phE',this.value&&!ok);
+});
+document.getElementById('un').addEventListener('input',function(){
+  const ok=/^[a-zA-Z0-9_]{4,20}$/.test(this.value);
+  mf(this,this.value&&!ok);se('unE',this.value&&!ok);
+});
+document.getElementById('cp').addEventListener('input',function(){
+  const ok=this.value===document.getElementById('pw').value;
+  mf(this,this.value&&!ok);se('cpE',this.value&&!ok);
+});
+
+function chkStr(pw){
+  const f=document.getElementById('sf'),l=document.getElementById('sl');
+  let s=0;
+  if(pw.length>=8)s++;if(/[A-Z]/.test(pw))s++;if(/\d/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;
+  const lvl=['','WEAK','FAIR','STRONG','MAX'];
+  const col=['','#ff2d78','#f5c842','#39ff14','#00f5ff'];
+  const pct=['0%','25%','50%','75%','100%'];
+  f.style.width=pct[s];f.style.background=col[s];
+  l.textContent=pw?lvl[s]:'';l.style.color=col[s];
+}
+
+// ── Submit ──
+document.getElementById('regForm').addEventListener('submit',function(e){
+  e.preventDefault();
+  let valid=true;const errs=[];
+
+  const chks=[
+    {id:'fn',errId:'fnE',lbl:'First Name',chk:v=>v.trim()!=='',msg:'First name is required'},
+    {id:'ln',errId:'lnE',lbl:'Last Name', chk:v=>v.trim()!=='',msg:'Last name is required'},
+    {id:'em',errId:'emE',lbl:'Email',     chk:v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v),msg:'Invalid email format'},
+    {id:'db',errId:'dbE',lbl:'DOB',       chk:v=>v!=='',msg:'Date of birth required'},
+    {id:'un',errId:'unE',lbl:'Username',  chk:v=>/^[a-zA-Z0-9_]{4,20}$/.test(v),msg:'4-20 chars, alphanumeric+underscore'},
+    {id:'pw',errId:'pwE',lbl:'Password',  chk:v=>/^(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(v),msg:'Weak password — requirements not met'},
+    {id:'cp',errId:'cpE',lbl:'Confirm PW',chk:v=>v===document.getElementById('pw').value,msg:'Password mismatch'},
+  ];
+  chks.forEach(({id,errId,lbl,chk,msg})=>{
+    const el=document.getElementById(id);
+    const ok=chk(el.value);mf(el,!ok);se(errId,!ok);
+    if(!ok){valid=false;errs.push({lbl,msg});}
+  });
+
+  const g=document.querySelector('input[name="gender"]:checked');
+  se('gE',!g);if(!g){valid=false;errs.push({lbl:'Gender',msg:'Classification required'});}
+
+  const p=document.getElementById('ph');
+  if(p.value&&!/^\d{10}$/.test(p.value.replace(/\D/g,''))){
+    mf(p,true);se('phE',true);valid=false;errs.push({lbl:'Phone',msg:'Must be 10 digits'});
+  }
+  const tc=document.getElementById('tc');
+  se('tcE',!tc.checked);if(!tc.checked){valid=false;errs.push({lbl:'EULA',msg:'Acceptance mandatory'});}
+
+  const fd={
+    'FULL_NAME':   (document.getElementById('fn').value+' '+document.getElementById('ln').value).trim(),
+    'EMAIL':       document.getElementById('em').value,
+    'PHONE':       p.value||'N/A',
+    'DOB':         document.getElementById('db').value?fmtDate(document.getElementById('db').value):'N/A',
+    'GENDER':      g?g.value:'N/A',
+    'HANDLE':      document.getElementById('un').value,
+    'CORP':        document.getElementById('cs').value||'UNAFFILIATED',
+    'LOCATION':    document.getElementById('ad').value||'N/A',
+    'EULA':        tc.checked?'[ ACCEPTED ]':'[ REJECTED ]',
+    'METHOD':      'HTTP '+method.toUpperCase()+' via $_'+method.toUpperCase(),
+  };
+  renderResult(valid,errs,fd);
+});
+
+function fmtDate(d){
+  const dt=new Date(d+'T00:00:00');
+  const m=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+  const today=new Date();
+  let age=today.getFullYear()-dt.getFullYear();
+  if(today.getMonth()<dt.getMonth()||(today.getMonth()===dt.getMonth()&&today.getDate()<dt.getDate()))age--;
+  return `${dt.getDate().toString().padStart(2,'0')}-${m[dt.getMonth()]}-${dt.getFullYear()} // AGE: ${age}`;
+}
+
+function renderResult(ok,errs,data){
+  const labels={post:'POST // $_POST',get:'GET // $_GET',request:'REQUEST // $_REQUEST'};
+  document.getElementById('mbadge').textContent='▸ '+labels[method];
+
+  const sb=document.getElementById('statusbar');
+  sb.className='statusbar '+(ok?'ok':'fail');
+  document.getElementById('sIcon').textContent=ok?'OK':'ERR';
+  document.getElementById('sTitle').textContent=ok?'IDENTITY NODE CREATED':'VALIDATION_FAILURE';
+  document.getElementById('sSub').textContent=ok
+    ?'> Data packet received and processed without errors.'
+    ?'> '+errs.length+' critical error(s) detected. Resubmit required.'
+    :'> '+errs.length+' critical error(s) detected. Resubmit required.';
+
+  const ec=document.getElementById('errcard');
+  if(!ok&&errs.length){
+    ec.style.display='block';
+    document.getElementById('errlist').innerHTML=errs.map(e=>
+      `<li><span class="fnm">${e.lbl}:</span> ${e.msg}</li>`).join('');
+  } else ec.style.display='none';
+
+  document.getElementById('dtbl').innerHTML=Object.entries(data).map(([k,v])=>
+    `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+  document.getElementById('ts').textContent=new Date().toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'medium'});
+
+  document.getElementById('page-form').classList.remove('active');
+  document.getElementById('page-result').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function goBack(){
+  document.getElementById('page-result').classList.remove('active');
+  document.getElementById('page-form').classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function resetForm(){
+  document.getElementById('regForm').reset();
+  document.querySelectorAll('.emsg').forEach(e=>e.classList.remove('show'));
+  document.querySelectorAll('input,select,textarea').forEach(e=>e.classList.remove('err','ok'));
+  document.getElementById('sf').style.width='0%';
+  document.getElementById('sl').textContent='';
+}
+
+function showCode(id,btn){
+  document.querySelectorAll('.ctab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.cblock').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('code-'+id).classList.add('active');
+}
+</script>
+</body>
+</html>
